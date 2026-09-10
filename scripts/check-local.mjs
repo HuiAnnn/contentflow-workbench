@@ -30,7 +30,7 @@ async function snapshot(){
  const response=await fetch(base+'/api/workspace',{headers:{cookie}});assert.equal(response.status,200);return response.json();
 }
 try{
- await start();await run(path.join(projectRoot,'tests/local-smoke.test.mjs'));
+ await start();await run(path.join(projectRoot,'tests/local-smoke.test.mjs'));await run(path.join(projectRoot,'tests/visitor-flow.test.mjs'));
  const before=await snapshot();await stop();await start();
  assert.deepEqual(await snapshot(),before,'Restarting must preserve all workspace records and publication snapshots');
  console.log('通过：服务停止并重新启动后，商品、版本和发布快照完整保留。');
