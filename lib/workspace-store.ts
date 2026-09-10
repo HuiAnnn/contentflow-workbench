@@ -1,0 +1,5 @@
+import {env} from 'cloudflare:workers';
+import {seedProducts,Workspace,Product} from './workflow';
+export function database(){if(!env.DB)throw new Error('工作区暂时无法连接，请稍后重试。');return env.DB}
+export async function loadWorkspace(id:string):Promise<Workspace>{let row=await database().prepare('SELECT data, revision FROM workspaces WHERE id = ?').bind(id).first<{data:string;revision:number}>();if(!row){await database().prepare('INSERT OR IGNORE INTO workspaces (id,data,revision) VALUES (?,?,0)').bind(id,JSON.stringify(seedProducts())).run();row=await database().prepare('SELECT data,revision FROM workspaces WHERE id = ?').bind(id).first<{data:string;revision:number}>()}if(!row)throw new Error('无法读取工作区');const products:Product[]=JSON.parse(row.data);for(const p of products)if(p.stage==='exported')p.stage='ready';return {products,revision:row.revision}}
+export async function saveWorkspace(id:string,w:Workspace,expected:number){const saved=await database().prepare('UPDATE workspaces SET data = ?, revision = ? WHERE id = ? AND revision = ?').bind(JSON.stringify(w.products),w.revision,id,expected).run();if(saved.meta.changes!==1)throw new Error('工作区已在其他窗口更新，请刷新数据后重试。')}

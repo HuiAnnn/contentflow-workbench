@@ -1,0 +1,32 @@
+name: Check local installation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-flow:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run setup:local
+      - name: Check repeat initialization
+        run: npm run setup:local
+      - run: npx --no-install tsc --noEmit
+      - run: node tests/model-runtime.test.mjs
+      - run: node tests/connections-runtime.test.mjs
+      - name: Check local workflow
+        run: node scripts/check-local.mjs

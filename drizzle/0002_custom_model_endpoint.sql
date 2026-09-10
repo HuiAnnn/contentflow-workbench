@@ -1,0 +1,1 @@
+ALTER TABLE `model_connections` ADD `endpoint` text;
